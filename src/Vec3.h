@@ -117,6 +117,30 @@ inline Vec3 cross(const Vec3 &v1, const Vec3 &v2)
                 v1.e[0] * v2.e[1] - v1.e[1] * v2.e[0]);
 }
 
+inline Vec3 reflect(const Vec3& v, const Vec3& n) {
+    Vec3 unitNormal = n / n.length();
+    return v - 2.0f * dot(v, unitNormal) * unitNormal;
+}
+
+inline bool refract(const Vec3& v, const Vec3& normal, float n1_over_n2, Vec3& refracted) {
+    Vec3 l = v / v.length();
+    Vec3 n = normal / normal.length();
+    float dt = dot(l, n);
+    float discriminant = 1.0f - n1_over_n2 * n1_over_n2 * (1.0f - dt * dt);
+    if(discriminant > 0.0f) {
+        refracted = n1_over_n2 * (l - n * dt) - n * sqrt(discriminant);
+        return true;
+    }else{
+        return false;
+    }
+}
+
+inline float schlick(float cosine, float ref_index) {
+    float r0 = (1.0f - ref_index) / (1.0f + ref_index);
+    r0 = r0 * r0;
+    return r0 + (1.0f - r0) * pow((1.0f - cosine), 5);
+}
+
 inline Vec3 &Vec3::operator+=(const Vec3 &v)
 {
     e[0] += v.e[0];
