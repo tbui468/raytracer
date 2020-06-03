@@ -9,6 +9,15 @@ const double PI = 3.1415926535897;
 #include "Camera.h"
 #include "Material.h"
 
+float randf(){
+    return float(rand()) / RAND_MAX;
+}
+
+/*
+//returns Hitable list ptr with n spheres
+Hitable* random_scene(int n) {
+
+}*/
 
 Vec3 random_sphere_unit_vector() {
     Vec3 v;
@@ -46,7 +55,7 @@ int main()
     imageFile.open("image.ppm");
 
     int nx = 200;
-    int ny = 100;
+    int ny = 200;
     int ns = 100; //number of random samples
 
     //P3: ASCII ppm file, width , height, 255: max value
@@ -60,15 +69,20 @@ int main()
 
     Hitable* list[5];
     list[0] = new Sphere(Vec3(-1.0f, 0.0f, -1.0f), 0.5f, new Lambertian(Vec3(0.5f, 0.7f, 1.0f)));
-    list[1] = new Sphere(Vec3(0.0f, -100.5f, -1.0f), 100.0f, new Lambertian(Vec3(0.5f, 0.5f, 0.5f)));
-    list[2] = new Sphere(Vec3(0.5f, 0.0f, -1.0f), 0.5f, new Metal(Vec3(0.6f, 1.0f, 0.8f), 0.1f));
+    list[1] = new Sphere(Vec3(0.0f, -200.5f, -1.0f), 200.0f, new Lambertian(Vec3(0.5f, 0.5f, 0.5f)));
+    list[2] = new Sphere(Vec3(1.5f, 0.5f, -1.25f), 1.0f, new Metal(Vec3(0.6f, 1.0f, 0.8f), 0.1f));
     list[3] = new Sphere(Vec3(-0.2f, -0.25f, -0.75f), 0.25f, new Lambertian(Vec3(1.0f, 0.5f, 0.7f)));
     list[4] = new Sphere(Vec3(0.0f, 0.0f, -2.0f), 0.5f, new Dielectric(1.5f));
     Hitable* world = new HitableList(list, 5);
-    Camera cam(Vec3(-2.0f, 2.0f, 1.0f), Vec3(0.0f, 0.0f, -1.0f), Vec3(0.0f, 1.0f, 0.0f), 40.0f, float(nx)/float(ny));
+    Vec3 lookFrom(-2.0f, 0.5f, 1.0f);
+    Vec3 lookAt(0.0f, 0.0f, -1.0f);
+    float disToFocus = (lookFrom - lookAt).length();
+    float aperture = 0.1f;
+    Camera cam(lookFrom, lookAt, Vec3(0.0f, 1.0f, 0.0f), 50.0f, float(nx)/float(ny), aperture, disToFocus);
 
     for (int j = ny - 1; j >= 0; --j)
     {
+        std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
         for (int i = 0; i < nx; ++i)
         {
             Vec3 col(0.0f, 0.0f, 0.0f);
@@ -88,6 +102,8 @@ int main()
             imageFile << ir << " " << ig << " " << ib << "\n";
         }
     }
+
+    std::cerr << "\nDone.\n" << std::flush;
 
     imageFile.close();
     return 0;
