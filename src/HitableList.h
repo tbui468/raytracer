@@ -3,13 +3,18 @@
 
 #include "Hitable.h"
 
+#include <memory>
+#include <vector>
+
 class HitableList : public Hitable {
 public:
     HitableList() {};
-    HitableList(Hitable** l, int count): m_list(l), m_count(count) {};
+    HitableList(std::shared_ptr<Hitable> object) {m_objects.push_back(object);};
+    void add(std::shared_ptr<Hitable> object) {m_objects.push_back(object);};
+    void clear() {m_objects.clear();};
     bool hit(const Ray& r, float tMin, float tMax, HitRecord& rec) const;
-    Hitable** m_list;
-    int m_count;
+public:
+    std::vector<std::shared_ptr<Hitable>> m_objects;
 };
 
 //loop through list of Hitables and returns true if anything is hit
@@ -18,8 +23,8 @@ bool HitableList::hit(const Ray& r, float tMin, float tMax, HitRecord& rec) cons
     HitRecord tempRec;
     bool hitAnything = false;
     float closestT = tMax;
-    for(int i = 0; i < m_count; ++i) {
-        if(m_list[i]->hit(r, tMin, closestT, tempRec)){
+    for(const std::shared_ptr<Hitable>& object : m_objects) {
+        if(object->hit(r, tMin, closestT, tempRec)) {
             closestT = tempRec.t;
             hitAnything = true;
             rec = tempRec;

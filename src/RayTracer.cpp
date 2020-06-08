@@ -1,51 +1,37 @@
 #include <iostream>
 #include <fstream>
-#include <random>
 
-const double PI = 3.1415926535897;
 
+#include "RayTracer.h" //common headers (including stb_image)
 #include "Sphere.h"
 #include "HitableList.h"
 #include "Camera.h"
 #include "Material.h"
+#include "Color.h"
 
-float randf(){
-    return float(rand()) / RAND_MAX;
-}
 
-/*
-//returns Hitable list ptr with n spheres
-Hitable* random_scene(int n) {
 
-}*/
 
-Vec3 random_sphere_unit_vector() {
-    Vec3 v;
-    do{
-        v = 2.0 * Vec3(float(rand())/RAND_MAX, float(rand())/RAND_MAX, float(rand())/RAND_MAX) - Vec3(1.0f, 1.0f, 1.0f);
-    }while(v.squared_length() >= 1.0f);
-    return v;
-}
 
 //returns a Vec3 color
 //depth is the maximum number of reflections
-Vec3 color(const Ray &r, Hitable* world, int depth)
+Vec3 color(const Ray &r, const Hitable& world, int depth)
 {
     HitRecord rec;
-    if(world->hit(r, 0.001f, 100.0f, rec)) {
+    if(world.hit(r, 0.001f, infinity, rec)) { //check for any hits in world.  If so, fills in HitRecord rec
         Ray scattered;
         Vec3 attenuation;
-        if(depth < 50 && rec.material_ptr->scatter(r, rec, attenuation, scattered)){
-            return attenuation * color(scattered, world, depth + 1);
+        if(depth >= 0 && rec.material_ptr->scatter(r, rec, attenuation, scattered)){
+            return attenuation * color(scattered, world, depth - 1); //recursively checks world again using new scattered light ray
         }else{
-            return Vec3(0.0f, 0.0f, 0.0f);
+            return Vec3(0.0f, 0.0f, 0.0f); //returns black if scatter depth is < 0 or if light is scattered to inside of metal
         }
     }
-    else //else returns background color(blue/white gradient)
+    else //else returns background color
     {
         Vec3 unit_dir = unit_vector(r.direction());
         float p = 0.5f * (unit_dir.y() + 1.0f);
-        return ((1.0f - p) * Vec3(1.0f, 1.0f, 1.0f) + p * Vec3(0.5f, 0.7f, 1.0f));
+        return ((1.0f - p) * Vec3(1.0f, 1.0f, 1.0f) + p * Vec3(.5f, 0.7f, 1.0f));
     }
 }
 
@@ -54,52 +40,64 @@ int main()
     std::ofstream imageFile;
     imageFile.open("image.ppm");
 
-    int nx = 200;
-    int ny = 200;
-    int ns = 100; //number of random samples
+    constexpr int nx = 200;
+    constexpr int ny = 200;
+    constexpr int ns = 256; //number of samples per pixel
+    constexpr int max_depth = 50; // maximum ray reflections
 
     //P3: ASCII ppm file, width , height, 255: max value
     imageFile << "P3\n"
               << nx << " " << ny << "\n255\n";
 
-    Vec3 lower_left_corner(-2.0f, -1.0f, -1.0f);
+    Point3 lower_left_corner(-2.0f, -1.0f, -1.0f);
     Vec3 horizontal(4.0f, 0.0f, 0.0f);
     Vec3 vertical(0.0f, 2.0f, 0.0f);
-    Vec3 origin(0.0f, 0.0f, 0.0f);
+    Point3 origin(0.0f, 0.0f, 0.0f);
 
-    Hitable* list[5];
-    list[0] = new Sphere(Vec3(-1.0f, 0.0f, -1.0f), 0.5f, new Lambertian(Vec3(0.5f, 0.7f, 1.0f)));
-    list[1] = new Sphere(Vec3(0.0f, -200.5f, -1.0f), 200.0f, new Lambertian(Vec3(0.5f, 0.5f, 0.5f)));
-    list[2] = new Sphere(Vec3(1.5f, 0.5f, -1.25f), 1.0f, new Metal(Vec3(0.6f, 1.0f, 0.8f), 0.1f));
-    list[3] = new Sphere(Vec3(-0.2f, -0.25f, -0.75f), 0.25f, new Lambertian(Vec3(1.0f, 0.5f, 0.7f)));
-    list[4] = new Sphere(Vec3(0.0f, 0.0f, -2.0f), 0.5f, new Dielectric(1.5f));
-    Hitable* world = new HitableList(list, 5);
-    Vec3 lookFrom(-2.0f, 0.5f, 1.0f);
-    Vec3 lookAt(0.0f, 0.0f, -1.0f);
+    float timeStart = 0.0f;
+    float timeEnd = 1.0f;
+
+    std::shared_ptr<CheckerTexture> checker = std::make_shared<CheckerTexture>(
+              std::make_shared<SolidColor>(1.0f, 1.0f, 1.0f), 
+              std::make_shared<SolidColor>(0.2f, 0.2f, 0.2f));
+
+    HitableList world;
+    world.add(std::make_shared<Sphere>(Vec3(-1.0f, 0.5f, -1.0f), Vec3(-1.0f, 0.2f, -1.0f), timeStart, timeEnd, 
+              0.5f, std::make_shared<Lambertian>(std::make_shared<SolidColor>(0.5f, 0.7f, 1.0f))));
+    world.add(std::make_shared<Sphere>(Vec3(0.0f, -200.5f, -1.0f), Vec3(0.0f, -200.5f, -1.0f), timeStart, timeEnd, 200.0f, std::make_shared<Lambertian>(checker)));
+    world.add(std::make_shared<Sphere>(Vec3(1.5f, 0.5f, -1.25f), Vec3(1.5f, 0.5f, -1.25f), timeStart, timeEnd, 1.0f, std::make_shared<Metal>(Vec3(1.0f, 0.5f, 0.7f), 0.01f)));
+    world.add(std::make_shared<Sphere>(Vec3(-0.2f, -0.25f, -0.75f), Vec3(-0.2f, -0.25f, -0.75f), timeStart, timeEnd, 
+              0.25f, std::make_shared<Lambertian>(std::make_shared<SolidColor>(0.5f, 0.6f, 0.5f))));
+    world.add(std::make_shared<Sphere>(Vec3(0.3f, -0.25f, -0.5f), Vec3(0.3f, -0.25f, -0.5f), timeStart, timeEnd, 0.25f, std::make_shared<Dielectric>(1.5f)));
+    world.add(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, -2.0f), Vec3(0.0f, 0.0f, -2.0f), timeStart, timeEnd, 0.5f, std::make_shared<Dielectric>(1.5f)));
+    world.add(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, -2.0f), Vec3(0.0f, 0.0f, -2.0f), timeStart, timeEnd, -0.45f, std::make_shared<Dielectric>(1.5f)));
+
+    Point3 lookFrom(-1.0f, 0.5f, 1.0f);
+    Point3 lookAt(0.0f, 0.0f, -2.0f);
     float disToFocus = (lookFrom - lookAt).length();
-    float aperture = 0.1f;
-    Camera cam(lookFrom, lookAt, Vec3(0.0f, 1.0f, 0.0f), 50.0f, float(nx)/float(ny), aperture, disToFocus);
+    float aperture = 0.05f;
+    float fov = 50.0f;
+    Vec3 vUp(0.0f, 1.0f, 0.0f);
+    float nxf = static_cast<float>(nx);
+    float nyf = static_cast<float>(ny);
+    Camera cam(lookFrom, lookAt, vUp, fov, nxf/nyf, aperture, disToFocus, timeStart, timeEnd);
 
     for (int j = ny - 1; j >= 0; --j)
     {
         std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
         for (int i = 0; i < nx; ++i)
         {
-            Vec3 col(0.0f, 0.0f, 0.0f);
-            for (int k = 0; k < ns; ++k)
+            Color col(0.0f, 0.0f, 0.0f);
+
+            for (int k = 0; k < ns; ++k) //sample ns times for antialiasing
             {
-
-                float u = float(i + float(rand())/RAND_MAX) / float(nx);
-                float v = float(j + float(rand())/RAND_MAX) / float(ny);
+                float u = (static_cast<float>(i) + randf()) / nxf;
+                float v = (static_cast<float>(j) + randf()) / nyf;
                 Ray r = cam.getRay(u, v);
-                col += color(r, world, 0); //check all objects
+                col += color(r, world, max_depth); //check all objects
             }
-            col /= float(ns);
 
-            int ir = int(255.99f * sqrt(col[0]));
-            int ig = int(255.99f * sqrt(col[1]));
-            int ib = int(255.99f * sqrt(col[2]));
-            imageFile << ir << " " << ig << " " << ib << "\n";
+            write_color(imageFile, col, ns);
         }
     }
 
