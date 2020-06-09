@@ -8,7 +8,7 @@
 #include "Camera.h"
 #include "Material.h"
 #include "Color.h"
-
+#include "BVH.h"
 
 
 
@@ -61,7 +61,10 @@ int main()
               std::make_shared<SolidColor>(1.0f, 1.0f, 1.0f), 
               std::make_shared<SolidColor>(0.2f, 0.2f, 0.2f));
 
+    std::shared_ptr<ImageTexture> earthTexture = std::make_shared<ImageTexture>("../../../src/earthmap.jpg");
+
     HitableList world;
+    
     world.add(std::make_shared<Sphere>(Vec3(-1.0f, 0.5f, -1.0f), Vec3(-1.0f, 0.2f, -1.0f), timeStart, timeEnd, 
               0.5f, std::make_shared<Lambertian>(std::make_shared<SolidColor>(0.5f, 0.7f, 1.0f))));
     world.add(std::make_shared<Sphere>(Vec3(0.0f, -200.5f, -1.0f), Vec3(0.0f, -200.5f, -1.0f), timeStart, timeEnd, 200.0f, std::make_shared<Lambertian>(checker)));
@@ -71,6 +74,9 @@ int main()
     world.add(std::make_shared<Sphere>(Vec3(0.3f, -0.25f, -0.5f), Vec3(0.3f, -0.25f, -0.5f), timeStart, timeEnd, 0.25f, std::make_shared<Dielectric>(1.5f)));
     world.add(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, -2.0f), Vec3(0.0f, 0.0f, -2.0f), timeStart, timeEnd, 0.5f, std::make_shared<Dielectric>(1.5f)));
     world.add(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, -2.0f), Vec3(0.0f, 0.0f, -2.0f), timeStart, timeEnd, -0.45f, std::make_shared<Dielectric>(1.5f)));
+
+    world.add(std::make_shared<Sphere>(Vec3(0.0f, 1.2f, -2.0f), Vec3(0.0f, 1.2f, -2.0f), timeStart, timeEnd, 
+              0.5f, std::make_shared<Lambertian>(earthTexture)));
 
     Point3 lookFrom(-1.0f, 0.5f, 1.0f);
     Point3 lookAt(0.0f, 0.0f, -2.0f);

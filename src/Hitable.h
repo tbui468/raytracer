@@ -23,6 +23,7 @@ struct HitRecord {
 class Hitable {
 public:
     virtual bool hit(const Ray& r, float tMin, float tMax, HitRecord& rec) const = 0; //pure virtual function
+    virtual bool bounding_box(float t0, float t1, AABB& output_box) const = 0; //t0 and t1 are for moving spheres (bounding box encloses all locations)
 };
 
 #endif //HITABLE_H

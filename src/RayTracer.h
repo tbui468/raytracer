@@ -19,6 +19,12 @@ inline float randf(float min, float max) {
     return randf() * (max - min) + min;
 }
 
+//returns random int in range[min, max)
+inline int randi(int min, int max) {
+    int diff = max - min;
+    return rand() % diff + min;
+}
+
 inline float degrees_to_radians(float degrees) {
     return degrees * PI / 180.0f;
 }
@@ -32,6 +38,7 @@ inline float clamp(float x, float min, float max) {
 //common headers
 #include "Vec3.h"
 #include "Ray.h"
+#include "AABB.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "external/stb/stb_image.h"
 

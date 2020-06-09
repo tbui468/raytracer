@@ -13,6 +13,7 @@ public:
     void add(std::shared_ptr<Hitable> object) {m_objects.push_back(object);};
     void clear() {m_objects.clear();};
     bool hit(const Ray& r, float tMin, float tMax, HitRecord& rec) const;
+    bool bounding_box(float t0, float t1, AABB& output_box) const;
 public:
     std::vector<std::shared_ptr<Hitable>> m_objects;
 };
@@ -33,5 +34,25 @@ bool HitableList::hit(const Ray& r, float tMin, float tMax, HitRecord& rec) cons
     return hitAnything;
 }
 
+//
+bool HitableList::bounding_box(float t0, float t1, AABB &output_box) const
+{
+    if(m_objects.empty()) return false;
+
+    AABB temp_box;
+    bool first_box = true;
+
+    //for each Hitable
+    for(const std::shared_ptr<Hitable>& object : m_objects) {
+        if(!object->bounding_box(t0, t1, temp_box)) return false; //return false if hitable is not boundable by AABB (not possible now with only spheres)
+        if(first_box) { //set output to temp_box if no previous box
+            output_box = temp_box;
+            first_box = false;
+        }else{ //set output to box enclosing temp_box and the previously constructed box
+            output_box = surrounding_box(output_box, temp_box);
+        }
+    }
+    return true;
+}
 
 #endif //HITABLELIST_H
