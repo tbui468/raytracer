@@ -42,7 +42,7 @@ int main()
 
     constexpr int nx = 200;
     constexpr int ny = 200;
-    constexpr int ns = 256; //number of samples per pixel
+    constexpr int ns = 56; //number of samples per pixel
     constexpr int max_depth = 50; // maximum ray reflections
 
     //P3: ASCII ppm file, width , height, 255: max value
@@ -64,19 +64,26 @@ int main()
     std::shared_ptr<ImageTexture> earthTexture = std::make_shared<ImageTexture>("../../../src/earthmap.jpg");
 
     HitableList world;
-    
+
+
+    //checker world
+    world.add(std::make_shared<Sphere>(Vec3(0.0f, -200.5f, -1.0f), Vec3(0.0f, -200.5f, -1.0f), timeStart, timeEnd, 200.0f, std::make_shared<Lambertian>(checker)));
     world.add(std::make_shared<Sphere>(Vec3(-1.0f, 0.5f, -1.0f), Vec3(-1.0f, 0.2f, -1.0f), timeStart, timeEnd, 
               0.5f, std::make_shared<Lambertian>(std::make_shared<SolidColor>(0.5f, 0.7f, 1.0f))));
-    world.add(std::make_shared<Sphere>(Vec3(0.0f, -200.5f, -1.0f), Vec3(0.0f, -200.5f, -1.0f), timeStart, timeEnd, 200.0f, std::make_shared<Lambertian>(checker)));
     world.add(std::make_shared<Sphere>(Vec3(1.5f, 0.5f, -1.25f), Vec3(1.5f, 0.5f, -1.25f), timeStart, timeEnd, 1.0f, std::make_shared<Metal>(Vec3(1.0f, 0.5f, 0.7f), 0.01f)));
-    world.add(std::make_shared<Sphere>(Vec3(-0.2f, -0.25f, -0.75f), Vec3(-0.2f, -0.25f, -0.75f), timeStart, timeEnd, 
+    world.add(std::make_shared<Sphere>(Vec3(1.0f, 0.0f, -2.0f), Vec3(1.0f, 0.0f, -2.0f), timeStart, timeEnd,  //coordinates 0, 0, -3 create hollow glass, 1, 0, -2 create glass???
               0.25f, std::make_shared<Lambertian>(std::make_shared<SolidColor>(0.5f, 0.6f, 0.5f))));
     world.add(std::make_shared<Sphere>(Vec3(0.3f, -0.25f, -0.5f), Vec3(0.3f, -0.25f, -0.5f), timeStart, timeEnd, 0.25f, std::make_shared<Dielectric>(1.5f)));
+
+    //glass sphere
     world.add(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, -2.0f), Vec3(0.0f, 0.0f, -2.0f), timeStart, timeEnd, 0.5f, std::make_shared<Dielectric>(1.5f)));
     world.add(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, -2.0f), Vec3(0.0f, 0.0f, -2.0f), timeStart, timeEnd, -0.45f, std::make_shared<Dielectric>(1.5f)));
 
     world.add(std::make_shared<Sphere>(Vec3(0.0f, 1.2f, -2.0f), Vec3(0.0f, 1.2f, -2.0f), timeStart, timeEnd, 
               0.5f, std::make_shared<Lambertian>(earthTexture)));
+
+    BVHNode root(world, 0.001f, infinity);
+
 
     Point3 lookFrom(-1.0f, 0.5f, 1.0f);
     Point3 lookAt(0.0f, 0.0f, -2.0f);
@@ -86,7 +93,7 @@ int main()
     Vec3 vUp(0.0f, 1.0f, 0.0f);
     float nxf = static_cast<float>(nx);
     float nyf = static_cast<float>(ny);
-    Camera cam(lookFrom, lookAt, vUp, fov, nxf/nyf, aperture, disToFocus, timeStart, timeEnd);
+    Camera cam(lookFrom, lookAt, vUp, fov, nxf / nyf, aperture, disToFocus, timeStart, timeEnd);
 
     for (int j = ny - 1; j >= 0; --j)
     {
@@ -100,14 +107,15 @@ int main()
                 float u = (static_cast<float>(i) + randf()) / nxf;
                 float v = (static_cast<float>(j) + randf()) / nyf;
                 Ray r = cam.getRay(u, v);
-                col += color(r, world, max_depth); //check all objects
+                col += color(r, root, max_depth); //check all objects
             }
 
             write_color(imageFile, col, ns);
         }
     }
 
-    std::cerr << "\nDone.\n" << std::flush;
+    std::cerr << "\nDone.\n"
+              << std::flush;
 
     imageFile.close();
     return 0;

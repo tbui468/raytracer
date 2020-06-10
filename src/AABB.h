@@ -11,6 +11,7 @@ public:
 
     //determine if ray hits box
     bool hit(const Ray& r, float tmin, float tmax) const {
+        
         //loop through x, y and z dimensions of axis-aligned bounding box
         for(int i = 0; i < 3; ++i) {
             //calculate t0 and t1 where t0 < t1
@@ -30,16 +31,16 @@ public:
         //Alternative optimized hit function
         for(int i = 0; i < 3; ++i) {
             float invD = 1.0f / r.direction()[i];
-            float t0 = (m_min[i] - r.origin()) * invD;
-            float t1 = (m_max[i] - r.origin()) * invD;
+            float t0 = (m_min[i] - r.origin()[i]) * invD;
+            float t1 = (m_max[i] - r.origin()[i]) * invD;
             if(invD < 0.0f)
                 std::swap(t0, t1);
             tmin = t0 < tmin ? tmin : t0;
             tmax = t1 > tmax ? tmax : t1;
             if(tmax <= tmin)
                 return false;
-        } 
-        */
+        } */
+        
         return true;
     }
 
