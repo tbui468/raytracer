@@ -11,7 +11,7 @@ public:
     virtual bool hit(const Ray& r, float tMin, float tMax, HitRecord& rec) const;
     virtual bool bounding_box(float t0, float t1, AABB& output_box) const;
     Vec3 center(float time) const;
-    float radius() const {return m_radius;};
+    float radius() const {return abs(m_radius);};
 private:
     Point3 m_center0;
     Point3 m_center1;
@@ -28,10 +28,11 @@ bool Sphere::bounding_box(float t0, float t1, AABB& output_box) const {
     Point3 origin1 = center(t1);
     AABB box1(origin1 - Point3(radius(), radius(), radius()),
               origin1 + Point3(radius(), radius(), radius()));
+              /*
     if(radius() < 0.0f) {
         std::swap(box0.m_max, box0.m_min);
         std::swap(box1.m_max, box1.m_min);
-    }
+    }*/
     output_box = surrounding_box(box0, box1);
     return true;
 }

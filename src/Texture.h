@@ -2,6 +2,7 @@
 #define TEXTURE_H
 
 #include "RayTracer.h"
+#include "Perlin.h"
 #include <iostream>
 
 class Texture {
@@ -22,18 +23,36 @@ private:
     Color m_colorValue;
 };
 
-class CheckerTexture : public Texture {
+class NoiseTexture : public Texture
+{
 public:
-    CheckerTexture() {};
-    CheckerTexture(std::shared_ptr<Texture> odd, std::shared_ptr<Texture> even) : m_odd(odd), m_even(even) {};
+    NoiseTexture(float scale) :m_scale(scale){};
     virtual Color value(float u, float v, const Point3& p) const override {
-        float sines = sin(8.0f*p.x()) * sin(8.0f*p.y()) * sin(8.0f*p.z());
-        if(sines < 0.0f){
+        return Color(1.0f, 1.0f, 1.0f) * m_noise.noise(m_scale * p);
+    }
+private:
+    Perlin m_noise;
+    float m_scale;
+};
+
+class CheckerTexture : public Texture
+{
+public:
+    CheckerTexture(){};
+    CheckerTexture(std::shared_ptr<Texture> odd, std::shared_ptr<Texture> even) : m_odd(odd), m_even(even){};
+    virtual Color value(float u, float v, const Point3 &p) const override
+    {
+        float sines = sin(8.0f * p.x()) * sin(8.0f * p.y()) * sin(8.0f * p.z());
+        if (sines < 0.0f)
+        {
             return m_odd->value(u, v, p);
-        }else {
+        }
+        else
+        {
             return m_even->value(u, v, p);
         }
     }
+
 private:
     std::shared_ptr<Texture> m_odd;
     std::shared_ptr<Texture> m_even;
@@ -44,12 +63,14 @@ class ImageTexture : public Texture
 public:
     const static int bytes_per_pixel = 3;
 
-    ImageTexture(): m_data(nullptr), m_width(0), m_height(0), m_bytes_per_scanline(0) {};
-    ImageTexture(const char* fileName) {
+    ImageTexture() : m_data(nullptr), m_width(0), m_height(0), m_bytes_per_scanline(0){};
+    ImageTexture(const char *fileName)
+    {
         int components_per_pixel = bytes_per_pixel;
         m_data = stbi_load(fileName, &m_width, &m_height, &components_per_pixel, components_per_pixel);
 
-        if(!m_data) {
+        if (!m_data)
+        {
             std::cerr << "Error: Could not load texture image file " << fileName << '\n';
             m_width = 0;
             m_height = 0;
@@ -58,7 +79,8 @@ public:
         m_bytes_per_scanline = components_per_pixel * m_width;
     }
 
-    ~ImageTexture() {
+    ~ImageTexture()
+    {
         delete m_data;
     }
     //SHOULD IMPLEMENT THESE TOO
@@ -66,9 +88,11 @@ public:
     //copy assignment
     //move assignment
     //move constructor
-    virtual Color value(float u, float v, const Point3& p) const override {
+    virtual Color value(float u, float v, const Point3 &p) const override
+    {
         //return cyan if no color data
-        if(m_data == nullptr) {
+        if (m_data == nullptr)
+        {
             return Color(0.0f, 1.0f, 1.0f);
         }
 
@@ -79,13 +103,16 @@ public:
         int i = static_cast<int>(u * m_width);
         int j = static_cast<int>(v * m_height);
 
-        if(i >= m_width) i = m_width - 1;
-        if(j >= m_height) j = m_height - 1;
+        if (i >= m_width)
+            i = m_width - 1;
+        if (j >= m_height)
+            j = m_height - 1;
 
         float colorScale = 1.0f / 255.0f;
-        unsigned char* pixel = m_data + j * m_bytes_per_scanline + i * bytes_per_pixel;
+        unsigned char *pixel = m_data + j * m_bytes_per_scanline + i * bytes_per_pixel;
         return Color(colorScale * pixel[0], colorScale * pixel[1], colorScale * pixel[2]);
     }
+
 private:
     unsigned char *m_data;
     int m_width;
