@@ -44,8 +44,7 @@ class Dielectric : public Material
 public:
     Dielectric(float ri) : m_refractiveIndex(ri) {};
     bool scatter(const Ray& r, const HitRecord& rec, Color& attenuation, Ray& scattered) const override{
-//        attenuation = Color(1.0f, 1.0f, 1.0f); //reflect all
-        attenuation = Color(0.9f, 0.98f, 0.9f); //reflect most
+        attenuation = Color(1.0f, 1.0f, 1.0f); //reflect all
         float etai_over_etat = rec.front_face ? (1.0f / m_refractiveIndex) : (m_refractiveIndex);
         Vec3 unit_direction = unit_vector(r.direction());
         float cos_theta = fmin(dot(-unit_direction, rec.normal), 1.0f);

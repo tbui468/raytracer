@@ -28,7 +28,8 @@ class NoiseTexture : public Texture
 public:
     NoiseTexture(float scale) :m_scale(scale){};
     virtual Color value(float u, float v, const Point3& p) const override {
-        return Color(1.0f, 1.0f, 1.0f) * m_noise.noise(m_scale * p);
+        //return Color(1.0f, 1.0f, 1.0f) * 0.5f * (1.0f + m_noise.turb(m_scale * p));
+        return Color(1.0f, 1.0f, 1.0f) * 0.5f * (1.0f + sin(m_scale * p.z() + 10.0f * m_noise.turb(p)));
     }
 private:
     Perlin m_noise;

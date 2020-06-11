@@ -20,10 +20,10 @@ inline float trilinear_interp(float c[2][2][2], float u, float v, float w) {
 class Perlin {
 public:
     Perlin(){
-        m_randFloat = new float[POINT_COUNT];
+        m_randVec = new Vec3[POINT_COUNT];
 
         for(int i = 0; i < POINT_COUNT; ++i) {
-            m_randFloat[i] = randf();
+            m_randVec[i] = random_unit_vector();
         }
 
         m_permX = perlin_generate_perm();
@@ -32,7 +32,7 @@ public:
     }
 
     ~Perlin() {
-        delete[] m_randFloat;
+        delete[] m_randVec;
         delete[] m_permX;
         delete[] m_permY;
         delete[] m_permZ;
@@ -46,31 +46,39 @@ public:
         v = v * v * (3-2*v);
         w = w * w * (3-2*w);
 
-        /*int i = static_cast<int>(4*p.x()) & 255;
-        int j = static_cast<int>(4*p.y()) & 255;
-        int k = static_cast<int>(4*p.z()) & 255;
-
-        return m_randFloat[m_permX[i] ^ m_permY[j] ^ m_permZ[k]];*/
-
         int i = floor(p.x());
         int j = floor(p.y());
         int k = floor(p.z());
-        float c[2][2][2];
+        Vec3 c[2][2][2];
 
         for(int di = 0; di < 2; ++di)
             for(int dj = 0; dj < 2; ++dj)
                 for(int dk = 0; dk < 2; ++dk) 
-                    c[di][dj][dk] = m_randFloat[
+                    c[di][dj][dk] = m_randVec[
                             m_permX[(i+di) & 255] ^
                             m_permY[(j+dj) & 255] ^
                             m_permZ[(k+dk) & 255]
                     ];
 
-        return trilinear_interp(c, u, v, w);
+        return perlin_interp(c, u, v, w);
+    }
+
+    float turb(const Point3& p, int depth = 7) const {
+        float accum = 0.0f;
+        Point3 temp_p = p;
+        float weight = 1.0f;
+
+        for(int i = 0; i < depth; ++i) {
+            accum += weight * noise(temp_p);
+            weight *= 0.5f;
+            temp_p *= 2.0f;
+        }
+
+        return fabs(accum);
     }
 private:
     static const int POINT_COUNT = 256;
-    float* m_randFloat;
+    Vec3* m_randVec;
     int* m_permX;
     int* m_permY;
     int* m_permZ;
@@ -88,14 +96,33 @@ private:
     }
 
     static void permute(int* p, int count) {
-        for(int i = count - 1; i > 0; --i) {
+        for (int i = count - 1; i > 0; --i)
+        {
             int target = randi(0, i + 1);
             int tmp = p[i];
             p[i] = p[target];
             p[target] = tmp;
         }
     }
-};
 
+    inline float perlin_interp(Vec3 c[2][2][2], float u, float v, float w) const
+    {
+        float uu = u * u * (3.0f - 2.0f * u);
+        float vv = v * v * (3.0f - 2.0f * v);
+        float ww = w * w * (3.0f - 2.0f * w);
+        float accum = 0.0f;
+
+        for (int i = 0; i < 2; ++i)
+            for (int j = 0; j < 2; ++j)
+                for (int k = 0; k < 2; ++k) {
+                    Vec3 weight_v(u - i, v - j, w - k);
+                    accum += (i*uu + (1.0f - i)*(1.0f-uu))
+                           * (j*vv + (1.0f - j)*(1.0f-vv))
+                           * (k*ww + (1.0f - k)*(1.0f-ww))
+                           * dot(c[i][j][k], weight_v);
+                }
+        return accum;
+    }
+};
 
 #endif //PERLIN_H

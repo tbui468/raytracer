@@ -42,7 +42,7 @@ int main()
 
     constexpr int nx = 200;
     constexpr int ny = 200;
-    constexpr int ns = 100; //number of samples per pixel
+    constexpr int ns = 50; //number of samples per pixel
     constexpr int max_depth = 50; // maximum ray reflections
 
     //P3: ASCII ppm file, width , height, 255: max value
@@ -66,7 +66,7 @@ int main()
     HitableList world;
 
     world.add(std::make_shared<Sphere>(Vec3(-0.7f, 0.5f, -2.0f), Vec3(-0.7f, 0.5f, -2.0f), timeStart, timeEnd, 
-              1.0f, std::make_shared<Lambertian>(std::make_shared<NoiseTexture>(8.0f))));
+              1.0f, std::make_shared<Lambertian>(std::make_shared<NoiseTexture>(2.0f))));
 
     //checker world
     world.add(std::make_shared<Sphere>(Vec3(0.0f, -200.5f, -1.0f), Vec3(0.0f, -200.5f, -1.0f), timeStart, timeEnd, 200.0f, std::make_shared<Lambertian>(checker)));/*
