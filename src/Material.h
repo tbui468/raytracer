@@ -10,6 +10,9 @@ class Material
 public:
     //scatter function determines how ray interacts with material (eg, specular or diffuse reflection)
     virtual bool scatter(const Ray &r, const HitRecord &rec, Color &attenuation, Ray &scattered) const = 0;
+    virtual Color emitted(float u, float v, const Point3& p) const {
+        return Color(0.0f, 0.0f, 0.0f); //default materials emits black (no light)
+    }
 };
 
 class Lambertian : public Material
@@ -68,6 +71,20 @@ public:
 
 public:
     float m_refractiveIndex;
+};
+
+class DiffuseLight : public Material {
+public:
+    DiffuseLight(std::shared_ptr<Texture> a) : m_emit(a) {};
+    virtual bool scatter(const Ray& r, const HitRecord& rec, Color& attenuation, Ray& scattered) const {
+        return false; //does not scatter light
+    }
+
+    virtual Color emitted(float u, float v, const Point3& p) const {
+        return m_emit->value(u, v, p); //returns color of texture
+    }
+public:
+    std::shared_ptr<Texture> m_emit;
 };
 
 #endif //MATERIAL_H

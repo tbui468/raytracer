@@ -26,4 +26,30 @@ public:
     virtual bool bounding_box(float t0, float t1, AABB& output_box) const = 0; //t0 and t1 are for moving spheres (bounding box encloses all locations)
 };
 
+//doesnt do anything now bc we have same material on both sides of wall
+class FlipFace : public Hitable
+{
+public:
+    FlipFace(std::shared_ptr<Hitable> p) : m_ptr(p){};
+    virtual bool hit(const Ray &r, float tMin, float tMax, HitRecord &rec) const
+    {
+        if (!m_ptr->hit(r, tMin, tMax, rec))
+        {
+            return false;
+        }
+        else
+        {
+            rec.front_face = !rec.front_face;
+            return true;
+        }
+    }
+    virtual bool bounding_box(float t0, float t1, AABB &output_box) const
+    {
+        return m_ptr->bounding_box(t0, t1, output_box);
+    }
+
+private:
+    std::shared_ptr<Hitable> m_ptr;
+};
+
 #endif //HITABLE_H
