@@ -53,7 +53,7 @@ inline bool box_compare(const std::shared_ptr<Hitable> a, const std::shared_ptr<
     }
 
     //compare coordinates of min corner
-    return box_a.m_min.e[axis] < box_b.m_min.e[axis]; 
+    return box_a.min().e[axis] < box_b.min().e[axis]; 
 }
 
 bool box_x_compare(const std::shared_ptr<Hitable> a, const std::shared_ptr<Hitable> b) {

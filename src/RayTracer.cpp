@@ -10,6 +10,8 @@
 #include "Color.h"
 #include "BVH.h"
 #include "AARect.h"
+#include "Box.h"
+#include "ConstantMedium.h"
 
 
 HitableList cornell_box() {
@@ -18,14 +20,26 @@ HitableList cornell_box() {
     std::shared_ptr<Lambertian> red = std::make_shared<Lambertian>(std::make_shared<SolidColor>(.65f, .05f, .05f));
     std::shared_ptr<Lambertian> white = std::make_shared<Lambertian>(std::make_shared<SolidColor>(.73f, .73f, .73f));
     std::shared_ptr<Lambertian> green = std::make_shared<Lambertian>(std::make_shared<SolidColor>(.12f, .45f, .15f));
-    std::shared_ptr<DiffuseLight> light = std::make_shared<DiffuseLight>(std::make_shared<SolidColor>(15.0f, 15.0f, 15.0f));
+    std::shared_ptr<DiffuseLight> light = std::make_shared<DiffuseLight>(std::make_shared<SolidColor>(7.0f, 7.0f, 7.0f));
 
     objects.add(std::make_shared<FlipFace>(std::make_shared<YZRect>(0.0f, 555.0f, 0.0f, 555.0f, 555.0f, green)));
     objects.add(std::make_shared<YZRect>(0.0f, 555.0f, 0.0f, 555.0f, 0.0f, red));
-    objects.add(std::make_shared<XZRect>(213.0f, 343.0f, 227.0f, 332.0f, 554.0f, light));
+    objects.add(std::make_shared<XZRect>(113.0f, 443.0f, 127.0f, 432.0f, 554.0f, light));
     objects.add(std::make_shared<FlipFace>(std::make_shared<XZRect>(0.0f, 555.0f, 0.0f, 555.0f, 0.0f, white)));
     objects.add(std::make_shared<XZRect>(0.0f, 555.0f, 0.0f, 555.0f, 555.0f, white));
     objects.add(std::make_shared<FlipFace>(std::make_shared<XYRect>(0.0f, 555.0f, 0.0f, 555.0f, 555.0f, white)));
+
+    //objects inside box
+    std::shared_ptr<Hitable> box1 = std::make_shared<Box>(Point3(0.0f, 0.0f, 0.0f), Point3(165.0f, 330.0f, 165.0f), white);
+    box1 = std::make_shared<RotateY>(box1, 15.0f);
+    box1 = std::make_shared<Translate>(box1, Vec3(265.0f, 0.0f, 295.0f));
+
+    std::shared_ptr<Hitable> box2 = std::make_shared<Box>(Point3(0.0f, 0.0f, 0.0f), Point3(165.0f, 165.0f, 165.0f), white);
+    box2 = std::make_shared<RotateY>(box2, -18.0f);
+    box2 = std::make_shared<Translate>(box2, Vec3(130.0f, 0.0f, 65.0f));
+
+    objects.add(std::make_shared<ConstantMedium>(box1, 0.01f, std::make_shared<SolidColor>(0.0f, 0.0f, 0.0f)));
+    objects.add(std::make_shared<ConstantMedium>(box2, 0.01f, std::make_shared<SolidColor>(1.0f, 1.0f, 1.0f)));
 
     return objects;
 }
@@ -69,7 +83,7 @@ int main()
 
     constexpr int nx = 200;
     constexpr int ny = 200;
-    constexpr int ns = 50; //number of samples per pixel
+    constexpr int ns = 256; //number of samples per pixel
     constexpr int max_depth = 50; // maximum ray reflections
 
     //P3: ASCII ppm file, width , height, 255: max value
@@ -121,7 +135,8 @@ int main()
               0.5f, std::make_shared<Lambertian>(earthTexture)));*/
 
     //BVHNode root(world, 0.001f, infinity);
-    BVHNode root(cornell_box(), 0.001f, infinity);
+    HitableList cornellBox = cornell_box();
+    BVHNode root(cornellBox, 0.001f, infinity);
 
     const Color background(0.0f, 0.0f, 0.0f);
     /*

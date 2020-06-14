@@ -44,19 +44,19 @@ public:
         return true;
     }
 
-public:
+private:
     Point3 m_min; //close corner of bounding box
     Point3 m_max; //far corner of bounding box
 };
 
 AABB surrounding_box(const AABB& b1, const AABB& b2) {
-    Point3 min(fmin(b1.m_min.x(), b2.m_min.x()),
-                fmin(b1.m_min.y(), b2.m_min.y()),
-                fmin(b1.m_min.z(), b2.m_min.z()));
+    Point3 min(fmin(b1.min().x(), b2.min().x()),
+                fmin(b1.min().y(), b2.min().y()),
+                fmin(b1.min().z(), b2.min().z()));
 
-    Point3 max(fmax(b1.m_max.x(), b2.m_max.x()),
-                fmax(b1.m_max.y(), b2.m_max.y()),
-                fmax(b1.m_max.z(), b2.m_max.z()));
+    Point3 max(fmax(b1.max().x(), b2.max().x()),
+                fmax(b1.max().y(), b2.max().y()),
+                fmax(b1.max().z(), b2.max().z()));
 
     return AABB(min, max);
 }
