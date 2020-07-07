@@ -48,26 +48,31 @@ bool ConstantMedium::hit(const Ray& r, float tMin, float tMax, HitRecord& rec) c
 
     const float ray_length = r.direction().length();
     const float distance_inside_boundry = (rec2.t - rec1.t) * ray_length;
-    const float hit_distance = m_negInvDensity * log(randf());
+    const float hit_distance = m_negInvDensity * log(randf()); //distance ray must travel before scattering off medium (including random variable)
 
-    if(hit_distance > distance_inside_boundry)
-        return false;
+    if (distance_inside_boundry > hit_distance) //scatter ray
+    {
 
-    rec.t = rec1.t + hit_distance / ray_length;
-    rec.p = r.point_at_parameter(rec.t);
+        rec.t = rec1.t + hit_distance / ray_length;
+        rec.p = r.point_at_parameter(rec.t);
 
-    if(debugging) {
-        std::cerr << "hit_distance = " << hit_distance << '\n'
-                  << "rec.t = " << rec.t << '\n'
-                  << "rec.p = " << rec.p << '\n';
+        if (debugging)
+        {
+            std::cerr << "hit_distance = " << hit_distance << '\n'
+                      << "rec.t = " << rec.t << '\n'
+                      << "rec.p = " << rec.p << '\n';
+        }
+
+        rec.normal = Vec3(1.0f, 0.0f, 0.0f); //arbitrary
+        rec.front_face = true;               //arbitrary
+        rec.material_ptr = m_phaseFunction;
+
+        return true;
     }
-
-    rec.normal = Vec3(1.0f, 0.0f, 0.0f); //arbitrary
-    rec.front_face = true; //arbitrary
-    rec.material_ptr = m_phaseFunction;
-
-    return true;
+    else //no ray scatter
+    {
+        return false;
+    }
 }
-
 
 #endif //CONSTANTMEDIUM_H

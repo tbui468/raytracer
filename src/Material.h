@@ -31,14 +31,17 @@ public:
 class Metal : public Material
 {
 public:
-    Metal(const Vec3& a, float f) : m_albedo(a) {if(f < 1.0f) m_fuzz = f; else m_fuzz = 1.0f;};
+    //Metal(const Vec3& a, float f) : m_albedo(a) {if(f < 1.0f) m_fuzz = f; else m_fuzz = 1.0f;};
+    Metal(std::shared_ptr<Texture> a, float f) : m_albedo(a) {if(f < 1.0f) m_fuzz = f; else m_fuzz = 1.0f;};
     bool scatter(const Ray &r, const HitRecord &rec, Vec3 &attenuation, Ray &scattered) const override {
         Vec3 target = unit_vector(reflect(r.direction(), rec.normal));
         scattered = Ray(rec.p, target + m_fuzz * random_in_unit_sphere(), r.time());
-        attenuation = m_albedo;
+        //attenuation = m_albedo;
+        attenuation = m_albedo->value(rec.u, rec.v, rec.p);
         return dot(scattered.direction(), rec.normal) > 0.0f; //only return true if scatter direction is away from sphere
     }
-    Vec3 m_albedo;
+    //Vec3 m_albedo;
+    std::shared_ptr<Texture> m_albedo;
     float m_fuzz;
 };
 

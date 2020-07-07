@@ -13,7 +13,104 @@
 #include "Box.h"
 #include "ConstantMedium.h"
 
+//first book cover w/ matte, metal, glass, hollow glass spheres
+//is this really necessary?????
+HitableList marbles_scene() {
+    HitableList objects;
+    return objects;
+}
 
+HitableList depth_blur_scene() {
+    HitableList objects;
+    //world
+    std::shared_ptr<NoiseTexture> marble = std::make_shared<NoiseTexture>(1.0f);
+    std::shared_ptr<SolidColor> red = std::make_shared<SolidColor>(0.9f, 0.5f, 0.5f);
+    std::shared_ptr<SolidColor> green = std::make_shared<SolidColor>(0.5f, 0.9f, 0.5f);
+    std::shared_ptr<SolidColor> blue = std::make_shared<SolidColor>(0.5f, 0.5f, 0.9f);
+    objects.add(std::make_shared<Sphere>(Vec3(0.0f, -200.5f, -1.0f), Vec3(0.0f, -200.5f, -1.0f), 0.0f, 1.0f, 200.0f, std::make_shared<Lambertian>(marble)));
+    //moving spheres (two vertical and one horizontal)
+    objects.add(std::make_shared<Sphere>(Vec3(-3.0f, 1.5f, -3.0f), Vec3(-3.0f, 1.5f, -3.0f), 0.0f, 1.0f, 
+              2.0f, std::make_shared<Lambertian>(red)));
+    objects.add(std::make_shared<Sphere>(Vec3(1.0f, 0.5f, -4.0f), Vec3(1.0f, 0.5f, -4.0f), 0.0f, 1.0f, 
+              1.0f, std::make_shared<Lambertian>(blue)));
+    objects.add(std::make_shared<Sphere>(Vec3(0.0f, 0.5f, 0.0f), Vec3(0.0f, 0.5f, 0.0f), 0.0f, 1.0f, 
+              1.0f, std::make_shared<Lambertian>(green)));
+    objects.add(std::make_shared<Sphere>(Vec3(1.0f, 0.0f, -1.0f), Vec3(1.0f, 0.0f, -1.0f), 0.0f, 1.0f, 
+              0.5f, std::make_shared<Dielectric>(1.5f)));
+    objects.add(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, 2.0f), Vec3(0.0f, 0.0f, 2.0f), 0.0f, 1.0f, 0.5f, std::make_shared<Dielectric>(1.5f)));
+    objects.add(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, 2.0f), Vec3(0.0f, 0.0f, 2.0f), 0.0f, 1.0f, -.45f, std::make_shared<Dielectric>(1.5f)));
+    return objects;
+}
+
+//checker ground, solid sphere, image-texture sphere, marble sphere, metal sphere (large)
+HitableList texture_scene() {
+    HitableList objects;
+    std::shared_ptr<CheckerTexture> checker = std::make_shared<CheckerTexture>(
+              std::make_shared<SolidColor>(1.0f, 1.0f, 1.0f), 
+              std::make_shared<SolidColor>(0.2f, 0.2f, 0.2f));
+
+    std::shared_ptr<NoiseTexture> marble = std::make_shared<NoiseTexture>(1.0f);
+
+    std::shared_ptr<SolidColor> green = std::make_shared<SolidColor>(0.7f, 0.9f, 0.5f);
+
+    std::shared_ptr<ImageTexture> earthTexture = std::make_shared<ImageTexture>("../../../src/earthmap.jpg");
+
+
+    objects.add(std::make_shared<Sphere>(Vec3(0.0f, -200.5f, -1.0f), Vec3(0.0f, -200.5f, -1.0f), 0.0f, 1.0f, 200.0f, std::make_shared<Lambertian>(checker)));
+    objects.add(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, -1.0f), Vec3(0.0f, 0.0f, -1.0f), 0.0f, 1.0f, 
+              0.5f, std::make_shared<Lambertian>(green)));
+    objects.add(std::make_shared<Sphere>(Vec3(-1.0f, 1.5f, -2.0f), Vec3(-1.0f, 1.5f, -2.0f), 0.0f, 1.0f, 
+              0.8f, std::make_shared<Lambertian>(earthTexture)));
+    objects.add(std::make_shared<Sphere>(Vec3(-1.0f, 0.5f, 0.0f), Vec3(-1.0f, 0.5f, 0.0f), 0.0f, 1.0f, 
+              1.0f, std::make_shared<Lambertian>(marble)));
+
+    //objects.add(std::make_shared<Sphere>(Vec3(1.5f, 0.5f, -1.25f), Vec3(1.5f, 0.5f, -1.25f), 0.0f, 1.0f, 1.0f, std::make_shared<Metal>(Vec3(1.0f, 0.5f, 0.7f), 0.01f)));
+    objects.add(std::make_shared<Sphere>(Vec3(1.5f, 0.5f, -1.25f), Vec3(1.5f, 0.5f, -1.25f), 0.0f, 1.0f, 1.0f, std::make_shared<Metal>(marble, 0.11f)));
+
+
+    return objects;
+}
+
+//three moving spheres (red, blue and green)
+HitableList motion_blur_scene() {
+    HitableList objects;
+    //world
+    std::shared_ptr<NoiseTexture> marble = std::make_shared<NoiseTexture>(1.0f);
+    std::shared_ptr<SolidColor> red = std::make_shared<SolidColor>(0.9f, 0.5f, 0.5f);
+    std::shared_ptr<SolidColor> green = std::make_shared<SolidColor>(0.5f, 0.9f, 0.5f);
+    std::shared_ptr<SolidColor> blue = std::make_shared<SolidColor>(0.5f, 0.5f, 0.9f);
+    objects.add(std::make_shared<Sphere>(Vec3(0.0f, -200.5f, -1.0f), Vec3(0.0f, -200.5f, -1.0f), 0.0f, 1.0f, 200.0f, std::make_shared<Lambertian>(marble)));
+    //moving spheres (two vertical and one horizontal)
+    objects.add(std::make_shared<Sphere>(Vec3(-1.5f, 0.5f, 0.0f), Vec3(-1.5f, 1.0f, 0.0f), 0.0f, 1.0f, 
+              0.7f, std::make_shared<Lambertian>(red)));
+    objects.add(std::make_shared<Sphere>(Vec3(0.0f, 0.5f, 0.0f), Vec3(0.0f, 2.0f, 0.0f), 0.0f, 1.0f, 
+              0.7f, std::make_shared<Lambertian>(green)));
+    objects.add(std::make_shared<Sphere>(Vec3(1.5f, 0.7f, 0.0f), Vec3(1.5f, 0.5f, 0.0f), 0.0f, 1.0f, 
+              0.7f, std::make_shared<Lambertian>(blue)));
+    //objects.add(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, 2.0f), Vec3(0.0f, 0.0f, 2.0f), 0.0f, 1.0f, 0.5f, std::make_shared<Metal>(Vec3(1.0f, 0.7f, 1.0f), 0.1f)));
+    return objects;
+}
+
+HitableList light_scene() {
+    HitableList objects;
+
+    std::shared_ptr<NoiseTexture> marble = std::make_shared<NoiseTexture>(1.0f);
+    std::shared_ptr<DiffuseLight> light = std::make_shared<DiffuseLight>(std::make_shared<SolidColor>(4.0f, 4.0f, 4.0f));
+
+    //light
+    objects.add(std::make_shared<XYRect>(-0.5f, 0.5f, 0.5f, 1.5f, -1.5f, light));
+    objects.add(std::make_shared<Sphere>(Vec3(0.0f, 3.0f, 0.0f), Vec3(0.0f, 3.0f, 0.0f), 0.0f, 1.0f, 
+              1.0f, light));
+
+    objects.add(std::make_shared<Sphere>(Vec3(0.0f, 0.5f, 0.0f), Vec3(0.0f, 0.5f, 0.0f), 0.0f, 1.0f, 
+              1.0f, std::make_shared<Lambertian>(marble)));
+
+
+    objects.add(std::make_shared<Sphere>(Vec3(0.0f, -200.5f, -1.0f), Vec3(0.0f, -200.5f, -1.0f), 0.0f, 1.0f, 200.0f, std::make_shared<Lambertian>(marble)));
+    return objects;
+}
+
+//cornell box with constant density volumne cubes
 HitableList cornell_box() {
     HitableList objects;
 
@@ -69,21 +166,17 @@ Vec3 ray_color(const Ray &r, const Color& background, const Hitable& world, int 
     else //returns background color if no Hitables are hit
     {
         return background;
-        /*
-        Vec3 unit_dir = unit_vector(r.direction());
-        float p = 0.5f * (unit_dir.y() + 1.0f);
-        return ((1.0f - p) * Vec3(1.0f, 1.0f, 1.0f) + p * Vec3(.5f, 0.7f, 1.0f));*/
     }
 }
 
 int main()
 {
     std::ofstream imageFile;
-    imageFile.open("image.ppm");
+    imageFile.open("marble_scene.ppm");
 
     constexpr int nx = 200;
     constexpr int ny = 200;
-    constexpr int ns = 256; //number of samples per pixel
+    constexpr int ns = 56; //number of samples per pixel
     constexpr int max_depth = 50; // maximum ray reflections
 
     //P3: ASCII ppm file, width , height, 255: max value
@@ -108,18 +201,8 @@ int main()
 
     std::shared_ptr<DiffuseLight> light = std::make_shared<DiffuseLight>(std::make_shared<SolidColor>(4.0f, 4.0f, 4.0f));
 
-    HitableList world;
 
-    //light
-    world.add(std::make_shared<XYRect>(-0.5f, 0.5f, 1.0f, 2.0f, -1.5f, light));
-    world.add(std::make_shared<Sphere>(Vec3(0.0f, 3.0f, 0.0f), Vec3(0.0f, 3.0f, 0.0f), timeStart, timeEnd, 
-              1.0f, light));
-
-    world.add(std::make_shared<Sphere>(Vec3(0.0f, 0.5f, 0.0f), Vec3(0.0f, 0.5f, 0.0f), timeStart, timeEnd, 
-              1.0f, std::make_shared<Lambertian>(marble)));
-
-
-    world.add(std::make_shared<Sphere>(Vec3(0.0f, -200.5f, -1.0f), Vec3(0.0f, -200.5f, -1.0f), timeStart, timeEnd, 200.0f, std::make_shared<Lambertian>(marble)));/*
+    /*
     world.add(std::make_shared<Sphere>(Vec3(-1.0f, 0.5f, -1.0f), Vec3(-1.0f, 0.2f, -1.0f), timeStart, timeEnd, 
               0.5f, std::make_shared<Lambertian>(std::make_shared<SolidColor>(0.5f, 0.7f, 1.0f))));
     world.add(std::make_shared<Sphere>(Vec3(1.5f, 0.5f, -1.25f), Vec3(1.5f, 0.5f, -1.25f), timeStart, timeEnd, 1.0f, std::make_shared<Metal>(Vec3(1.0f, 0.5f, 0.7f), 0.01f)));
@@ -136,9 +219,14 @@ int main()
 
     //BVHNode root(world, 0.001f, infinity);
     HitableList cornellBox = cornell_box();
-    BVHNode root(cornellBox, 0.001f, infinity);
+    HitableList lightScene = light_scene();
+    HitableList textureScene = texture_scene();
+    HitableList motionBlurScene = motion_blur_scene();
+    HitableList depthBlurScene = depth_blur_scene();
+    HitableList marbleScene = marbles_scene();
+    BVHNode root(textureScene, 0.001f, infinity);
 
-    const Color background(0.0f, 0.0f, 0.0f);
+    const Color background(0.8f, 0.9f, 1.0f);
     /*
     Point3 lookFrom(6.0f, 3.0f, 2.0f);
     Point3 lookAt(0.0f, 0.0f, 0.0f);
@@ -146,10 +234,14 @@ int main()
     float aperture = 0.03f;
     float fov = 50.0f;
     Vec3 vUp(0.0f, 1.0f, 0.0f);*/
-    Point3 lookFrom(278.0f, 278.0f, -800.0f);
-    Point3 lookAt(278.0f, 278.0f, 0.0f);
+    //Point3 lookFrom(278.0f, 278.0f, -800.0f);
+    //Point3 lookAt(278.0f, 278.0f, 0.0f);
+
+    //light
+    Point3 lookFrom(2.0f, 1.0f, 5.0f);
+    Point3 lookAt(0.0f, 0.5f, 0.0f);
     float disToFocus = 10.0f;
-    float aperture = 0.00f;
+    float aperture = 0.05f;
     float fov = 40.0f;
     Vec3 vUp(0.0f, 1.0f, 0.0f);
 

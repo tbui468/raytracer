@@ -39,6 +39,8 @@ public:
     }
 
     float noise(const Point3& p) const {
+        //smoothstep parameter (weight) 
+        //each paramter is 0 to .9999
         float u = p.x() - floor(p.x());
         float v = p.y() - floor(p.y());
         float w = p.z() - floor(p.z());
@@ -46,17 +48,18 @@ public:
         v = v * v * (3-2*v);
         w = w * w * (3-2*w);
 
+        //get lower corner of cube
         int i = floor(p.x());
         int j = floor(p.y());
         int k = floor(p.z());
-        Vec3 c[2][2][2];
+        Vec3 c[2][2][2]; //create a 2x2x2 array of Vec3
 
         for(int di = 0; di < 2; ++di)
             for(int dj = 0; dj < 2; ++dj)
                 for(int dk = 0; dk < 2; ++dk) 
                     c[di][dj][dk] = m_randVec[
-                            m_permX[(i+di) & 255] ^
-                            m_permY[(j+dj) & 255] ^
+                            m_permX[(i+di) & 255] ^ // ^ is bitwise xor
+                            m_permY[(j+dj) & 255] ^ //i still don't get this
                             m_permZ[(k+dk) & 255]
                     ];
 
@@ -98,15 +101,16 @@ private:
     static void permute(int* p, int count) {
         for (int i = count - 1; i > 0; --i)
         {
-            int target = randi(0, i + 1);
-            int tmp = p[i];
-            p[i] = p[target];
-            p[target] = tmp;
+            int target = randi(0, count);
+            std::swap(p[i], p[target]);
         }
     }
 
     inline float perlin_interp(Vec3 c[2][2][2], float u, float v, float w) const
     {
+        //uu, vv, and ww are the paramters (weights) 
+        //aren't u, v and w already smoothed in noise() function????
+        //applying smoothstep twice or is it a bug???
         float uu = u * u * (3.0f - 2.0f * u);
         float vv = v * v * (3.0f - 2.0f * v);
         float ww = w * w * (3.0f - 2.0f * w);
