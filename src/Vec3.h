@@ -180,3 +180,13 @@ Vec3 random_in_hemisphere(const Vec3& normal) {
     else
         return -in_unit_sphere;
 }
+
+Vec3 random_cosine_direction() {
+    float r1 = randf();
+    float r2 = randf();
+    float z = sqrt(1 - r2);
+    float phi = 2 * PI * r1;
+    float x = cos(phi) * sqrt(r2);
+    float y = sin(phi) * sqrt(r2);
+    return Vec3(x, y, z);
+}
