@@ -22,7 +22,7 @@ private:
 
 //build u,v,w orthonormal basis from w (which we will designate as the normal vector n)
 void ONB::build_from_w(const Vec3& n) {
-    m_axis[2] = unit_vector(n);
+    m_axis[2] = unit_vector(n); //set w to the surface normal
     //choose axis a, such that it is not parallel to n (dot product == 1 means parallel)
     Vec3 a;
     Vec3 x_axis(1.0f, 0.0f, 0.0f);

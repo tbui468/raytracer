@@ -26,7 +26,7 @@ public:
     virtual bool bounding_box(float t0, float t1, AABB& output_box) const = 0; //t0 and t1 are for moving spheres (bounding box encloses all locations)
 };
 
-//doesnt do anything now bc we have same material on both sides of wall
+//light only emits from one side of rectangle
 class FlipFace : public Hitable
 {
 public:

@@ -18,7 +18,7 @@ public:
         return 0.0f;
     }
 
-    virtual Color emitted(float u, float v, const Point3& p) const {
+    virtual Color emitted(const Ray& r_in, const HitRecord& rec, float u, float v, const Point3& p) const {
         return Color(0.0f, 0.0f, 0.0f); //default materials emits black (no light)
     }
 };
@@ -32,7 +32,7 @@ public:
         //Vec3 direction = random_in_hemisphere(rec.normal); 
         ONB onb;
         onb.build_from_w(rec.normal);
-        Vec3 direction = onb.local(random_cosine_direction()); //chosen from hemisphere
+        Vec3 direction = onb.local(random_cosine_direction()); //chooses point on hemisphere and converts to uvw coordinates
         scattered = Ray(rec.p, unit_vector(direction), r.time());  
         albedo = m_albedo->value(rec.u, rec.v, rec.p);
         //the distribution of the random sample
@@ -103,8 +103,11 @@ public:
         return false; //does not scatter light
     }
 
-    virtual Color emitted(float u, float v, const Point3& p) const {
-        return m_emit->value(u, v, p); //returns color of texture
+    virtual Color emitted(const Ray& r_in, const HitRecord& rec, float u, float v, const Point3& p) const {
+        if(rec.front_face)
+            return m_emit->value(u, v, p); //returns color of texture
+        else 
+            return Color(0.0f, 0.0f, 0.0f);
     }
 public:
     std::shared_ptr<Texture> m_emit;

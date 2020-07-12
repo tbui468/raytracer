@@ -109,7 +109,7 @@ HitableList cornell_box() {
 
     objects.add(std::make_shared<FlipFace>(std::make_shared<YZRect>(0.0f, 555.0f, 0.0f, 555.0f, 555.0f, green)));
     objects.add(std::make_shared<YZRect>(0.0f, 555.0f, 0.0f, 555.0f, 0.0f, red));
-    objects.add(std::make_shared<XZRect>(213.0f, 343.0f, 227.0f, 332.0f, 554.0f, light));
+    objects.add(std::make_shared<FlipFace>(std::make_shared<XZRect>(213.0f, 343.0f, 227.0f, 332.0f, 554.0f, light)));
     objects.add(std::make_shared<FlipFace>(std::make_shared<XZRect>(0.0f, 555.0f, 0.0f, 555.0f, 0.0f, white)));
     objects.add(std::make_shared<XZRect>(0.0f, 555.0f, 0.0f, 555.0f, 555.0f, white));
     objects.add(std::make_shared<FlipFace>(std::make_shared<XYRect>(0.0f, 555.0f, 0.0f, 555.0f, 555.0f, white)));

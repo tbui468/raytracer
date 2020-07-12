@@ -27,21 +27,30 @@ Color ray_color(const Ray &r, const Color& background, const Hitable& world, int
         Color albedo;
         float pdf;
         if(depth >= 0){ 
-            Color emitted = rec.material_ptr->emitted(rec.u, rec.v, rec.p);
             if(rec.material_ptr->scatter(r, rec, albedo, scattered, pdf)) { //if scatter
-                //albedo is the irradiance
-                //scattering_pdf is the chance that the ray goes toward viewer
-                //ray_color (recursive call) is light from all directions that bounce to our collision point/viewpoint
+                Color emitted = rec.material_ptr->emitted(r, rec, rec.u, rec.v, rec.p);
+                //sampling light directly
+                Point3 on_light = Point3(randf(213.0f, 343.0f), 554.0f, randf(227.0f, 332.0f)); //sample random point on light
+                Vec3 to_light = on_light - rec.p; //find vector from p to random point on light
+                float dis_squared = to_light.squared_length();
+                to_light = unit_vector(to_light);
+                if(dot(to_light, rec.normal) < 0.0f)
+                    return emitted;
+                float light_area = (343.0f - 213.0f) * (332.0f - 227.0f);
+                float light_cosine = fabs(to_light.y());
+                pdf = dis_squared / (light_cosine * light_area);
+                scattered = Ray(rec.p, to_light, r.time());
                 return emitted + albedo * rec.material_ptr->scattering_pdf(r, rec, scattered) * 
                     ray_color(scattered, background, world, depth - 1)/pdf; 
             }else{ //if no scattering
+                Color emitted = rec.material_ptr->emitted(r, rec, rec.u, rec.v, rec.p);
                 return emitted;
             }
         }else{
-            return Vec3(0.0f, 0.0f, 0.0f); //returns black if scatter depth is < 0 or if light is scattered to inside of metal
+            return Vec3(0.0f, 0.0f, 0.0f); 
         }
     }
-    else //returns background color if no Hitables are hit
+    else 
     {
         return background;
     }
@@ -54,7 +63,7 @@ int main()
 
     constexpr int nx = 200;
     constexpr int ny = 200;
-    constexpr int ns = 100; //number of samples per pixel
+    constexpr int ns = 10; //number of samples per pixel
     constexpr int max_depth = 50; // maximum ray reflections
 
     //P3: ASCII ppm file, width , height, 255: max value
