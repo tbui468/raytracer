@@ -16,6 +16,8 @@ inline float randf(){
 
 //returns random float in range [min, max)
 inline float randf(float min, float max) {
+    if(max < min)
+        std::swap(max, min);
     return randf() * (max - min) + min;
 }
 

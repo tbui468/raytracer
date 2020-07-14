@@ -24,6 +24,13 @@ class Hitable {
 public:
     virtual bool hit(const Ray& r, float tMin, float tMax, HitRecord& rec) const = 0; //pure virtual function
     virtual bool bounding_box(float t0, float t1, AABB& output_box) const = 0; //t0 and t1 are for moving spheres (bounding box encloses all locations)
+    //dummy functions (we only need these two functions for the light)
+    virtual float pdf_value(const Point3& origin, const Vec3& direction) const {
+        return 0.0f;
+    }
+    virtual Vec3 random(const Point3& origin) const {
+        return Vec3(0.0f, 0.0f, 0.0f);
+    }
 };
 
 //light only emits from one side of rectangle

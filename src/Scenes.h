@@ -115,6 +115,7 @@ HitableList cornell_box() {
     objects.add(std::make_shared<FlipFace>(std::make_shared<XYRect>(0.0f, 555.0f, 0.0f, 555.0f, 555.0f, white)));
 
     //objects inside box
+    std::shared_ptr<Material> aluminum = std::make_shared<Metal>(std::make_shared<SolidColor>(0.8f, 0.85f, 0.88f), 0.0f);
     std::shared_ptr<Hitable> box1 = std::make_shared<Box>(Point3(0.0f, 0.0f, 0.0f), Point3(165.0f, 330.0f, 165.0f), white);
     box1 = std::make_shared<RotateY>(box1, 15.0f);
     box1 = std::make_shared<Translate>(box1, Vec3(265.0f, 0.0f, 295.0f));

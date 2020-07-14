@@ -153,6 +153,25 @@ public:
         return true;
     }
 
+    //pdf for sampling this hitable 
+    virtual float pdf_value(const Point3& origin, const Vec3& v) const {
+        HitRecord rec;
+        if(!this->hit(Ray(origin, v, 0.0f), 0.001f, infinity, rec))
+            return 0.0f;
+
+        float area = abs(m_x1 - m_x0) * abs(m_z1 - m_z0);
+        float dis_squared = rec.t * rec.t * v.squared_length();
+        float cosine = fabs(dot(v, rec.normal) / v.length());
+
+        return dis_squared / (cosine * area);
+    }
+    
+    //returns vector from origin to random point on rectangle
+    virtual Vec3 random(const Point3& origin) const {
+        Point3 random_point = Point3(randf(m_x0, m_x1), m_k, randf(m_z0, m_z1));
+        return random_point - origin;
+    }
+
 public:
     std::shared_ptr<Material> m_material;
     float m_z0;

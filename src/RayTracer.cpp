@@ -13,6 +13,7 @@
 #include "Box.h"
 #include "ConstantMedium.h" //eg, gas or fog
 #include "Scenes.h" //list of scenes
+#include "PDF.h"
 
 
 
@@ -22,38 +23,41 @@
 Color ray_color(const Ray &r, const Color& background, const Hitable& world, int depth)
 {
     HitRecord rec;
-    if(world.hit(r, 0.001f, infinity, rec)) { //check for any hits in world.  If so, fills in HitRecord rec
-        Ray scattered;
-        Color albedo;
-        float pdf;
-        if(depth >= 0){ 
-            if(rec.material_ptr->scatter(r, rec, albedo, scattered, pdf)) { //if scatter
-                Color emitted = rec.material_ptr->emitted(r, rec, rec.u, rec.v, rec.p);
-                //sampling light directly
-                Point3 on_light = Point3(randf(213.0f, 343.0f), 554.0f, randf(227.0f, 332.0f)); //sample random point on light
-                Vec3 to_light = on_light - rec.p; //find vector from p to random point on light
-                float dis_squared = to_light.squared_length();
-                to_light = unit_vector(to_light);
-                if(dot(to_light, rec.normal) < 0.0f)
-                    return emitted;
-                float light_area = (343.0f - 213.0f) * (332.0f - 227.0f);
-                float light_cosine = fabs(to_light.y());
-                pdf = dis_squared / (light_cosine * light_area);
-                scattered = Ray(rec.p, to_light, r.time());
-                return emitted + albedo * rec.material_ptr->scattering_pdf(r, rec, scattered) * 
-                    ray_color(scattered, background, world, depth - 1)/pdf; 
-            }else{ //if no scattering
-                Color emitted = rec.material_ptr->emitted(r, rec, rec.u, rec.v, rec.p);
-                return emitted;
-            }
-        }else{
-            return Vec3(0.0f, 0.0f, 0.0f); 
-        }
-    }
-    else 
-    {
+
+    //if exceeded max depth
+    if(depth <= 0)
+        return Color(0.0f, 0.0f, 0.0f);
+
+    //if ray hits no object, return the background color
+    if(!world.hit(r, 0.001f, infinity, rec))
         return background;
+
+    ScatterRecord srec;
+    //Color emitted = rec.material_ptr->emitted(r, rec, rec.u, rec.v, rec.p); //can simplify to just rec
+    Color emitted = rec.material_ptr->emitted(r, rec); //can simplify to just rec
+    if(!rec.material_ptr->scatter(r, rec, srec))
+        return emitted;
+    
+    if(srec.is_specular) {
+        return srec.attenuation * ray_color(srec.specular_ray, background,
+                                            world, depth - 1);
     }
+
+    std::shared_ptr<Hitable> light_shape = 
+        std::make_shared<XZRect>(213.0f, 343.0f, 227.0f, 332.0f, 554.0f,
+        std::shared_ptr<Material>());
+    std::shared_ptr<HittablePDF> p0 = std::make_shared<HittablePDF>(light_shape, rec.p);
+
+    MixturePDF p(p0, srec.pdf_ptr);
+
+
+    Ray scattered(rec.p, p.generate(), r.time());
+    float pdf_val = p.value(scattered.direction());  
+    if(pdf_val < 0.0001f) //avoid dividing by zero (and very small numbers)
+        return emitted;
+    return emitted + srec.attenuation * rec.material_ptr->scattering_pdf(r, rec, scattered) * 
+        ray_color(scattered, background, world, depth - 1)/pdf_val;
+
 }
 
 int main()
@@ -63,7 +67,7 @@ int main()
 
     constexpr int nx = 200;
     constexpr int ny = 200;
-    constexpr int ns = 10; //number of samples per pixel
+    constexpr int ns = 50; //number of samples per pixel
     constexpr int max_depth = 50; // maximum ray reflections
 
     //P3: ASCII ppm file, width , height, 255: max value

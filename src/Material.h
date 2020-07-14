@@ -4,13 +4,23 @@
 #include "Hitable.h"
 #include "Texture.h"
 #include "ONB.h"
+#include "PDF.h"
+
+
+//records how details for scatter
+struct ScatterRecord{
+    Ray specular_ray;
+    bool is_specular;
+    Color attenuation;
+    std::shared_ptr<PDF> pdf_ptr;
+};
 
 
 class Material
 {
 public:
     //scatter function determines how ray interacts with material (eg, specular or diffuse reflection)
-    virtual bool scatter(const Ray &r, const HitRecord &rec, Color &albedo, Ray &scattered, float& pdf) const {
+    virtual bool scatter(const Ray &r_in, const HitRecord &rec, ScatterRecord& srec) const {
         return false;
     }
 
@@ -18,7 +28,8 @@ public:
         return 0.0f;
     }
 
-    virtual Color emitted(const Ray& r_in, const HitRecord& rec, float u, float v, const Point3& p) const {
+    //virtual Color emitted(const Ray& r_in, const HitRecord& rec, float u, float v, const Point3& p) const {
+    virtual Color emitted(const Ray& r_in, const HitRecord& rec) const {
         return Color(0.0f, 0.0f, 0.0f); //default materials emits black (no light)
     }
 };
@@ -27,17 +38,10 @@ class Lambertian : public Material
 {
 public:
     Lambertian(std::shared_ptr<Texture> a) : m_albedo(a) {};
-    bool scatter(const Ray &r, const HitRecord &rec, Vec3 &albedo, Ray &scattered, float& pdf) const override {
-        //this is where we choose a random sample
-        //Vec3 direction = random_in_hemisphere(rec.normal); 
-        ONB onb;
-        onb.build_from_w(rec.normal);
-        Vec3 direction = onb.local(random_cosine_direction()); //chooses point on hemisphere and converts to uvw coordinates
-        scattered = Ray(rec.p, unit_vector(direction), r.time());  
-        albedo = m_albedo->value(rec.u, rec.v, rec.p);
-        //the distribution of the random sample
-        //pdf = 0.5 / PI; //this is the pdf of the sample
-        pdf = dot(onb.w(), scattered.direction()) / PI; //cos(theta) / pi is the pdf of lambertian scattering
+    bool scatter(const Ray &r, const HitRecord &rec, ScatterRecord& srec) const override {
+        srec.is_specular = false;
+        srec.attenuation = m_albedo->value(rec.u, rec.v, rec.p);
+        srec.pdf_ptr = std::make_shared<CosinePDF>(rec.normal);
         return true;
     }
 
@@ -54,12 +58,13 @@ class Metal : public Material
 {
 public:
     Metal(std::shared_ptr<Texture> a, float f) : m_albedo(a) {if(f < 1.0f) m_fuzz = f; else m_fuzz = 1.0f;};
-    bool scatter(const Ray &r, const HitRecord &rec, Vec3 &attenuation, Ray &scattered, float& pdf) const override {
+    bool scatter(const Ray &r, const HitRecord &rec, ScatterRecord& srec) const override {
         Vec3 target = unit_vector(reflect(r.direction(), rec.normal));
-        scattered = Ray(rec.p, target + m_fuzz * random_in_unit_sphere(), r.time());
-        //attenuation = m_albedo;
-        attenuation = m_albedo->value(rec.u, rec.v, rec.p);
-        return dot(scattered.direction(), rec.normal) > 0.0f; //only return true if scatter direction is away from sphere
+        srec.specular_ray = Ray(rec.p, target + m_fuzz * random_in_unit_sphere(), r.time());
+        srec.attenuation = m_albedo->value(rec.u, rec.v, rec.p);
+        srec.is_specular = true;
+        srec.pdf_ptr = nullptr; //we won't use the pdf if specular
+        return dot(srec.specular_ray.direction(), rec.normal) > 0.0f; 
     }
     std::shared_ptr<Texture> m_albedo;
     float m_fuzz;
@@ -69,7 +74,8 @@ class Dielectric : public Material
 {
 public:
     Dielectric(float ri) : m_refractiveIndex(ri) {};
-    bool scatter(const Ray& r, const HitRecord& rec, Color& attenuation, Ray& scattered, float& pdf) const override{
+    bool scatter(const Ray& r, const HitRecord& rec, ScatterRecord& srec) const override{
+        /*
         attenuation = Color(1.0f, 1.0f, 1.0f); //reflect all
         float etai_over_etat = rec.front_face ? (1.0f / m_refractiveIndex) : (m_refractiveIndex);
         Vec3 unit_direction = unit_vector(r.direction());
@@ -89,7 +95,8 @@ public:
             Vec3 refracted = refract(unit_direction, rec.normal, etai_over_etat);
             scattered = Ray(rec.p, refracted, r.time());
             return true;
-        }
+        }*/
+        return false;
     }
 
 public:
@@ -103,9 +110,10 @@ public:
         return false; //does not scatter light
     }
 
-    virtual Color emitted(const Ray& r_in, const HitRecord& rec, float u, float v, const Point3& p) const {
+    //virtual Color emitted(const Ray& r_in, const HitRecord& rec, float u, float v, const Point3& p) const {
+    virtual Color emitted(const Ray& r_in, const HitRecord& rec) const {
         if(rec.front_face)
-            return m_emit->value(u, v, p); //returns color of texture
+            return m_emit->value(rec.u, rec.v, rec.p); //returns color of texture
         else 
             return Color(0.0f, 0.0f, 0.0f);
     }
