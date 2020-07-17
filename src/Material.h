@@ -75,8 +75,10 @@ class Dielectric : public Material
 public:
     Dielectric(float ri) : m_refractiveIndex(ri) {};
     bool scatter(const Ray& r, const HitRecord& rec, ScatterRecord& srec) const override{
-        /*
-        attenuation = Color(1.0f, 1.0f, 1.0f); //reflect all
+        
+        srec.attenuation = Color(1.0f, 1.0f, 1.0f); //reflect all
+        srec.is_specular = true; 
+        srec.pdf_ptr = nullptr;
         float etai_over_etat = rec.front_face ? (1.0f / m_refractiveIndex) : (m_refractiveIndex);
         Vec3 unit_direction = unit_vector(r.direction());
         float cos_theta = fmin(dot(-unit_direction, rec.normal), 1.0f);
@@ -87,16 +89,15 @@ public:
         if (etai_over_etat * sin_theta > 1.0f || randf() < schlick(cos_theta, etai_over_etat))
         {
             Vec3 reflected = reflect(unit_direction, rec.normal);
-            scattered = Ray(rec.p, reflected, r.time());
+            srec.specular_ray = Ray(rec.p, reflected, r.time());
             return true;
         }
         else //refract ray
         {
             Vec3 refracted = refract(unit_direction, rec.normal, etai_over_etat);
-            scattered = Ray(rec.p, refracted, r.time());
+            srec.specular_ray = Ray(rec.p, refracted, r.time());
             return true;
-        }*/
-        return false;
+        }
     }
 
 public:

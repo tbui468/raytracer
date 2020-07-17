@@ -11,7 +11,7 @@ public:
 
 class CosinePDF : public PDF {
 public:
-    CosinePDF(const Vec3& w) {uvw.build_from_w(w);}
+    CosinePDF(const Vec3& w) :uvw(ONB(w)) {}
 
     //get the pdf(direction) value
     //direction is generated using generate() function

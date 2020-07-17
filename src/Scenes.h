@@ -1,6 +1,12 @@
 #ifndef SCENES_H
 #define SCENES_H
 
+struct SceneData {
+    HitableList objects;
+    HitableList lights;
+};
+
+
 //first book cover w/ matte, metal, glass, hollow glass spheres
 //is this really necessary?????
 HitableList marbles_scene() {
@@ -109,22 +115,30 @@ HitableList cornell_box() {
 
     objects.add(std::make_shared<FlipFace>(std::make_shared<YZRect>(0.0f, 555.0f, 0.0f, 555.0f, 555.0f, green)));
     objects.add(std::make_shared<YZRect>(0.0f, 555.0f, 0.0f, 555.0f, 0.0f, red));
-    objects.add(std::make_shared<FlipFace>(std::make_shared<XZRect>(213.0f, 343.0f, 227.0f, 332.0f, 554.0f, light)));
+    objects.add(std::make_shared<FlipFace>(std::make_shared<XZRect>(213.0f, 343.0f, 227.0f, 332.0f, 554.0f, light))); 
     objects.add(std::make_shared<FlipFace>(std::make_shared<XZRect>(0.0f, 555.0f, 0.0f, 555.0f, 0.0f, white)));
     objects.add(std::make_shared<XZRect>(0.0f, 555.0f, 0.0f, 555.0f, 555.0f, white));
     objects.add(std::make_shared<FlipFace>(std::make_shared<XYRect>(0.0f, 555.0f, 0.0f, 555.0f, 555.0f, white)));
 
-    //objects inside box
-    std::shared_ptr<Material> aluminum = std::make_shared<Metal>(std::make_shared<SolidColor>(0.8f, 0.85f, 0.88f), 0.0f);
+    //tall box
+    //std::shared_ptr<Material> aluminum = std::make_shared<Metal>(std::make_shared<SolidColor>(0.8f, 0.85f, 0.88f), 0.0f);
     std::shared_ptr<Hitable> box1 = std::make_shared<Box>(Point3(0.0f, 0.0f, 0.0f), Point3(165.0f, 330.0f, 165.0f), white);
     box1 = std::make_shared<RotateY>(box1, 15.0f);
     box1 = std::make_shared<Translate>(box1, Vec3(265.0f, 0.0f, 295.0f));
     objects.add(box1);
 
+    //small box
+    /*
     std::shared_ptr<Hitable> box2 = std::make_shared<Box>(Point3(0.0f, 0.0f, 0.0f), Point3(165.0f, 165.0f, 165.0f), white);
     box2 = std::make_shared<RotateY>(box2, -18.0f);
     box2 = std::make_shared<Translate>(box2, Vec3(130.0f, 0.0f, 65.0f));
-    objects.add(box2);
+    objects.add(box2);*/
+
+    //std::shared_ptr<Hitable> sphere = std::make_shared<Sphere>(Point3(80.0f, 80.0f, 80.0f), Point3(80.0f, 80.0f, 80.0f),
+    std::shared_ptr<Hitable> sphere = std::make_shared<Sphere>(Point3(210.0f, 80.0f, 145.0f), Point3(210.0f, 80.0f, 145.0f),
+                                                                0.0f, 1.0f, 80.0f, std::make_shared<Dielectric>(1.5f));
+    //sphere = std::make_shared<Translate>(sphere, Vec3(130.0f, 0.0f, 65.0f));
+    objects.add(sphere);
 
     //objects.add(std::make_shared<ConstantMedium>(box1, 0.01f, std::make_shared<SolidColor>(0.0f, 0.0f, 0.0f)));
     //objects.add(std::make_shared<ConstantMedium>(box2, 0.01f, std::make_shared<SolidColor>(1.0f, 1.0f, 1.0f)));

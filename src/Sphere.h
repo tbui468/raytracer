@@ -2,6 +2,7 @@
 #define SPHERE_H
 
 #include "Hitable.h"
+#include "ONB.h"
 
 class Sphere : public Hitable {
 public:
@@ -12,6 +13,8 @@ public:
     virtual bool bounding_box(float t0, float t1, AABB& output_box) const;
     Vec3 center(float time) const;
     float radius() const {return abs(m_radius);};
+    float pdf_value(const Point3& origin, const Vec3& v) const;
+    Vec3 random(const Point3& origin) const;
 private:
     Point3 m_center0;
     Point3 m_center1;
@@ -82,6 +85,35 @@ Vec3 Sphere::center(float time) const {
     return m_center0 + (time - m_time0) / (m_time1 - m_time0) * (m_center1 - m_center0);
 }
 
+//return the pdf(vector)
+float Sphere::pdf_value(const Point3 &origin, const Vec3 &v) const
+{
+    //first check ray from origin in direction v will hit sphere
+    HitRecord rec;
+    if(!this->hit(Ray(origin, v, m_time0), 0.0001f, infinity, rec)) 
+        return 0.0f;
+    else { //otherwise compute and return inverse area of area extended by cone
+        Vec3 dir = center(m_time0) - origin;
+        float dis_squared = dir.squared_length();
+        float cos_theta_max = sqrt(1.0f - (m_radius * m_radius) / dis_squared);
+        float solid_angle = 2.0f * PI * (1.0f - cos_theta_max);
+        return 1.0f / solid_angle;
+    }
+}
 
+//sample sphere by generating random unit vector from origin to sphere (uniformly sampled)
+Vec3 Sphere::random(const Point3 &origin) const
+{
+    //this generates random vector in xyz coordinates
+    //so we need to convert to uvw coordinates (make the direction from origin to sphere center correspond to the z-axis)
+    float phi = 2.0f * PI * randf();
+    Vec3 dir = center(m_time0) - origin;
+    float dis_squared = dir.squared_length();
+    float cos_max = sqrt(1.0f - (m_radius * m_radius) / dis_squared);
+    float cos_theta = 1.0f + randf() * (cos_max - 1.0f);
+    float sin_theta = sqrt(1.0f - cos_theta * cos_theta);
+    ONB uvw(dir);
+    return uvw.local(Vec3(sin_theta * cos(phi), sin_theta * sin(phi), cos_theta));
+}
 
 #endif //SPHERE_H

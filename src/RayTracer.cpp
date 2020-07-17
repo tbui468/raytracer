@@ -16,11 +16,9 @@
 #include "PDF.h"
 
 
-
-
 //returns a Color
 //depth is the maximum number of reflections
-Color ray_color(const Ray &r, const Color& background, const Hitable& world, int depth)
+Color ray_color(const Ray &r, const Color& background, const Hitable& world, std::shared_ptr<Hitable> lights, int depth)
 {
     HitRecord rec;
 
@@ -40,13 +38,10 @@ Color ray_color(const Ray &r, const Color& background, const Hitable& world, int
     
     if(srec.is_specular) {
         return srec.attenuation * ray_color(srec.specular_ray, background,
-                                            world, depth - 1);
+                                            world, lights, depth - 1);
     }
 
-    std::shared_ptr<Hitable> light_shape = 
-        std::make_shared<XZRect>(213.0f, 343.0f, 227.0f, 332.0f, 554.0f,
-        std::shared_ptr<Material>());
-    std::shared_ptr<HittablePDF> p0 = std::make_shared<HittablePDF>(light_shape, rec.p);
+    std::shared_ptr<HittablePDF> p0 = std::make_shared<HittablePDF>(lights, rec.p);
 
     MixturePDF p(p0, srec.pdf_ptr);
 
@@ -56,7 +51,7 @@ Color ray_color(const Ray &r, const Color& background, const Hitable& world, int
     if(pdf_val < 0.0001f) //avoid dividing by zero (and very small numbers)
         return emitted;
     return emitted + srec.attenuation * rec.material_ptr->scattering_pdf(r, rec, scattered) * 
-        ray_color(scattered, background, world, depth - 1)/pdf_val;
+        ray_color(scattered, background, world, lights, depth - 1)/pdf_val;
 
 }
 
@@ -67,7 +62,7 @@ int main()
 
     constexpr int nx = 200;
     constexpr int ny = 200;
-    constexpr int ns = 50; //number of samples per pixel
+    constexpr int ns = 100; //number of samples per pixel
     constexpr int max_depth = 50; // maximum ray reflections
 
     //P3: ASCII ppm file, width , height, 255: max value
@@ -119,7 +114,18 @@ int main()
 
     Camera cam(lookfrom, lookat, vup, vfov, nxf/nyf, aperture, dis_to_focus, t0, t1);
 
+    std::shared_ptr<HitableList> lights = std::make_shared<HitableList>();
 
+    std::shared_ptr<Hitable> rect_light = 
+        std::make_shared<XZRect>(213.0f, 343.0f, 227.0f, 332.0f, 554.0f,
+        std::shared_ptr<Material>()); //default Material bc we only sample this 
+
+
+    std::shared_ptr<Hitable> sphere_light = std::make_shared<Sphere>(Point3(210.0f, 80.0f, 145.0f), Point3(210.0f, 80.0f, 145.0f),
+                                                                0.0f, 1.0f, 80.0f, std::shared_ptr<Material>());
+
+    lights->add(rect_light);
+    lights->add(sphere_light);
 
     for (int j = ny - 1; j >= 0; --j)
     {
@@ -133,7 +139,7 @@ int main()
                 float u = (static_cast<float>(i) + randf()) / nxf;
                 float v = (static_cast<float>(j) + randf()) / nyf;
                 Ray r = cam.getRay(u, v);
-                col += ray_color(r, background, root, max_depth); //check all objects
+                col += ray_color(r, background, root, lights, max_depth); //check all objects
             }
 
             write_color(imageFile, col, ns); //function averages col based on number of samples
